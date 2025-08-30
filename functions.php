@@ -121,7 +121,6 @@ function offer_details_callback($post) {
     echo '<tr><th colspan="2"><h3 style="margin: 20px 0 10px;">Галерея проекта</h3></th></tr>';
     echo '<tr><th><label>Изображения галереи<br><small>(до 5 изображений)</small>:</label></th><td>';
     
-    // Gallery uploader
     for ($i = 1; $i <= 5; $i++) {
         $image_id = isset($gallery["image_$i"]) ? $gallery["image_$i"] : '';
         $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'medium') : '';
@@ -142,7 +141,6 @@ function offer_details_callback($post) {
     echo '</td></tr>';
     echo '</table>';
     
-    // Add media uploader script
     echo '<script>
     jQuery(document).ready(function($) {
         
@@ -226,7 +224,6 @@ function save_offer_meta($post_id) {
         }
     }
     
-    // Save gallery images
     $gallery = [];
     for ($i = 1; $i <= 5; $i++) {
         if (isset($_POST["gallery_image_$i"]) && !empty($_POST["gallery_image_$i"])) {
@@ -237,7 +234,6 @@ function save_offer_meta($post_id) {
 }
 add_action('save_post', 'save_offer_meta');
 
-// Enqueue media uploader for admin
 function enqueue_admin_media_uploader() {
     global $typenow;
     if (in_array($typenow, ['offer', 'project'])) {
@@ -298,7 +294,6 @@ function project_details_callback($post) {
     echo '<tr><th><label for="project_insulation_spec">Утепление:</label></th><td><textarea id="project_insulation_spec" name="project_insulation_spec" rows="2" class="large-text">' . esc_textarea($insulation_spec) . '</textarea></td></tr>';
     echo '<tr><th><label for="project_includes">Что включено<br><small>(каждый пункт с новой строки)</small>:</label></th><td><textarea id="project_includes" name="project_includes" rows="5" class="large-text">' . esc_textarea($includes) . '</textarea></td></tr>';
     
-    // Gallery for projects
     echo '<tr><th colspan="2"><h3 style="margin: 20px 0 10px;">Галерея проекта</h3></th></tr>';
     echo '<tr><th><label>Изображения галереи<br><small>(до 5 изображений)</small>:</label></th><td>';
     
@@ -322,7 +317,6 @@ function project_details_callback($post) {
     echo '</td></tr>';
     echo '</table>';
     
-    // Add media uploader script for projects
     echo '<script>
     jQuery(document).ready(function($) {
         
@@ -416,7 +410,6 @@ function save_project_meta($post_id) {
             }
         }
         
-        // Save project gallery
         $gallery = [];
         for ($i = 1; $i <= 5; $i++) {
             if (isset($_POST["project_gallery_image_$i"]) && !empty($_POST["project_gallery_image_$i"])) {
@@ -434,28 +427,23 @@ function save_project_meta($post_id) {
 }
 add_action('save_post', 'save_project_meta');
 
-// AJAX обработчики для форм
-// AJAX обработчики для форм
+// AJAX
 function handle_contact_form() {
-    // Проверяем nonce
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'reputacia_nonce')) {
         wp_send_json_error('Ошибка безопасности');
         wp_die();
     }
 
-    // Получаем и очищаем данные
     $name = sanitize_text_field($_POST['name']);
     $phone = sanitize_text_field($_POST['phone']);
     $message = isset($_POST['message']) ? sanitize_textarea_field($_POST['message']) : '';
     $form_type = isset($_POST['form_type']) ? sanitize_text_field($_POST['form_type']) : 'contact';
     
-    // Дополнительные поля для калькулятора
     $area = isset($_POST['area']) ? sanitize_text_field($_POST['area']) : '';
     $finish = isset($_POST['finish']) ? sanitize_text_field($_POST['finish']) : '';
     $windows = isset($_POST['windows']) ? sanitize_text_field($_POST['windows']) : '';
     $calculated_price = isset($_POST['calculated_price']) ? sanitize_text_field($_POST['calculated_price']) : '';
 
-    // Подготовка данных для email
     $to = get_option('admin_email');
     $subject = ($form_type === 'callback') ? 'Заказ обратного звонка' : 'Новая заявка с сайта';
     $subject .= ' - ' . get_bloginfo('name');
@@ -482,10 +470,8 @@ function handle_contact_form() {
 
     $headers = ['Content-Type: text/plain; charset=UTF-8'];
 
-    // Отправляем email
     $email_sent = wp_mail($to, $subject, $body, $headers);
 
-    // Создаем запись в кастомном типе записи
     $post_data = [
         'post_title' => ($form_type === 'callback') ? "Обратный звонок - $name" : "Заявка от $name",
         'post_content' => $message,
@@ -566,7 +552,7 @@ function contact_form_meta_box_callback($post) {
     $date = get_post_meta($post->ID, 'contact_date', true);
     $ip = get_post_meta($post->ID, 'contact_ip', true);
     
-    // Данные из калькулятора
+
     $area = get_post_meta($post->ID, 'contact_area', true);
     $finish = get_post_meta($post->ID, 'contact_finish', true);
     $windows = get_post_meta($post->ID, 'contact_windows', true);
@@ -582,7 +568,6 @@ function contact_form_meta_box_callback($post) {
     
     echo '<tr><th><label>Тип формы:</label></th><td>' . esc_html($form_type === 'callback' ? 'Обратный звонок' : ($form_type === 'calculator' ? 'Калькулятор' : 'Обычная заявка')) . '</td></tr>';
     
-    // Показываем данные калькулятора если есть
     if ($area || $finish || $windows || $calculated_price) {
         echo '<tr><th colspan="2"><h3>Данные из калькулятора</h3></th></tr>';
         if ($area) echo '<tr><th><label>Площадь:</label></th><td>' . esc_html($area) . ' м²</td></tr>';
