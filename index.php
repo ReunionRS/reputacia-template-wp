@@ -81,33 +81,82 @@
             <button data-filter="bath">Бани</button>
             <button data-filter="commercial">Коммерческие</button>
         </div>
-        <div class="projects-grid">
-            <?php
-            $projects_query = new WP_Query(array(
-                'post_type' => 'project',
-                'posts_per_page' => 6,
-                'post_status' => 'publish'
-            ));
-            
-            if ($projects_query->have_posts()) :
-                while ($projects_query->have_posts()) : $projects_query->the_post();
-                    $project_type = get_post_meta(get_the_ID(), '_project_type', true);
-            ?>
-            <div class="project-card" data-category="<?php echo esc_attr($project_type); ?>">
-                <?php if (has_post_thumbnail()) : ?>
-                    <?php the_post_thumbnail('medium_large', array('alt' => get_the_title())); ?>
-                <?php endif; ?>
-                <div class="project-card-body">
-                    <h3><?php the_title(); ?></h3>
-                    <p><?php echo wp_trim_words(get_the_excerpt(), 15); ?></p>
-                </div>
+<div class="projects-grid">
+    <?php
+    $projects_query = new WP_Query(array(
+        'post_type' => 'project',
+        'posts_per_page' => 6,
+        'post_status' => 'publish'
+    ));
+    
+    if ($projects_query->have_posts()) :
+        while ($projects_query->have_posts()) : $projects_query->the_post();
+            $project_type = get_post_meta(get_the_ID(), '_project_type', true);
+            $project_series = get_post_meta(get_the_ID(), '_project_series', true);
+            $area = get_post_meta(get_the_ID(), '_project_area', true);
+            $price = get_post_meta(get_the_ID(), '_project_price', true);
+    ?>
+    <div class="project-card" data-category="<?php echo esc_attr($project_type); ?>">
+        <?php if (has_post_thumbnail()) : ?>
+            <div class="project-card-image">
+                <?php the_post_thumbnail('medium_large', array('alt' => get_the_title())); ?>
             </div>
-            <?php 
-                endwhile;
-                wp_reset_postdata();
-            endif;
-            ?>
+        <?php endif; ?>
+        
+        <div class="project-card-body">
+            <?php if ($project_series) : ?>
+                <div class="project-series-badge"><?php echo esc_html($project_series); ?></div>
+            <?php endif; ?>
+            
+            <h3><?php the_title(); ?></h3>
+            
+            <?php if ($area || $price) : ?>
+                <div class="project-specs">
+                    <?php if ($area) : ?>
+                        <span class="spec-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 3H21V21H3V3ZM5 5V19H19V5H5Z" fill="currentColor"/>
+                            </svg>
+                            <?php echo $area; ?>м²
+                        </span>
+                    <?php endif; ?>
+                    
+                    <?php if ($price) : ?>
+                        <span class="spec-item price-spec">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2ZM13.5 6V7.5C14.61 7.5 15.5 8.39 15.5 9.5S14.61 11.5 13.5 11.5V13H10.5V11.5C9.39 11.5 8.5 10.61 8.5 9.5S9.39 7.5 10.5 7.5V6H13.5ZM10.5 9.5C10.5 9.22 10.72 9 11 9H13C13.28 9 13.5 9.22 13.5 9.5S13.28 10 13 10H11C10.72 10 10.5 9.78 10.5 9.5Z" fill="currentColor"/>
+                            </svg>
+                            от <?php echo number_format($price, 0, '', ' '); ?> ₽
+                        </span>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+            
+            <p class="project-excerpt"><?php echo wp_trim_words(get_the_excerpt(), 12); ?></p>
         </div>
+        
+        <div class="project-card-footer">
+            <div class="project-type-badge">
+                <?php 
+                echo $project_type === 'house' ? 'Дом' : 
+                    ($project_type === 'bath' ? 'Баня' : 'Коммерческое');
+                ?>
+            </div>
+            
+            <a href="<?php the_permalink(); ?>" class="project-view-link">
+                Подробнее
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.59 16.58L13.17 12L8.59 7.42L10 6L16 12L10 18L8.59 16.58Z" fill="currentColor"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+    <?php 
+        endwhile;
+        wp_reset_postdata();
+    endif;
+    ?>
+</div>
     </div>
 </section>
 
@@ -185,5 +234,4 @@
         </div>
     </div>
 </section>
-
 <?php get_footer(); ?>

@@ -99,12 +99,101 @@ function offer_details_callback($post) {
     $area = get_post_meta($post->ID, '_offer_area', true);
     $price = get_post_meta($post->ID, '_offer_price', true);
     $features = get_post_meta($post->ID, '_offer_features', true);
+    $project_description = get_post_meta($post->ID, '_offer_project_description', true);
+    $frame_spec = get_post_meta($post->ID, '_offer_frame_spec', true);
+    $windows_spec = get_post_meta($post->ID, '_offer_windows_spec', true);
+    $electrical_spec = get_post_meta($post->ID, '_offer_electrical_spec', true);
+    $interior_spec = get_post_meta($post->ID, '_offer_interior_spec', true);
+    $includes = get_post_meta($post->ID, '_offer_includes', true);
+    $gallery = get_post_meta($post->ID, '_offer_gallery', true);
     
     echo '<table class="form-table">';
     echo '<tr><th><label for="offer_area">Площадь (м²):</label></th><td><input type="number" id="offer_area" name="offer_area" value="' . esc_attr($area) . '" class="regular-text"></td></tr>';
     echo '<tr><th><label for="offer_price">Цена (₽):</label></th><td><input type="number" id="offer_price" name="offer_price" value="' . esc_attr($price) . '" class="regular-text"></td></tr>';
     echo '<tr><th><label for="offer_features">Особенности<br><small>(через запятую)</small>:</label></th><td><textarea id="offer_features" name="offer_features" rows="3" class="large-text">' . esc_textarea($features) . '</textarea></td></tr>';
+    echo '<tr><th><label for="offer_project_description">Описание проекта:</label></th><td><textarea id="offer_project_description" name="offer_project_description" rows="5" class="large-text">' . esc_textarea($project_description) . '</textarea></td></tr>';
+    echo '<tr><th colspan="2"><h3 style="margin: 20px 0 10px;">Технические характеристики</h3></th></tr>';
+    echo '<tr><th><label for="offer_frame_spec">Силовой каркас:</label></th><td><textarea id="offer_frame_spec" name="offer_frame_spec" rows="3" class="large-text">' . esc_textarea($frame_spec) . '</textarea></td></tr>';
+    echo '<tr><th><label for="offer_windows_spec">Окна:</label></th><td><textarea id="offer_windows_spec" name="offer_windows_spec" rows="3" class="large-text">' . esc_textarea($windows_spec) . '</textarea></td></tr>';
+    echo '<tr><th><label for="offer_electrical_spec">Электропроводка:</label></th><td><textarea id="offer_electrical_spec" name="offer_electrical_spec" rows="3" class="large-text">' . esc_textarea($electrical_spec) . '</textarea></td></tr>';
+    echo '<tr><th><label for="offer_interior_spec">Внутренняя отделка:</label></th><td><textarea id="offer_interior_spec" name="offer_interior_spec" rows="3" class="large-text">' . esc_textarea($interior_spec) . '</textarea></td></tr>';
+    echo '<tr><th><label for="offer_includes">Что включено<br><small>(каждый пункт с новой строки)</small>:</label></th><td><textarea id="offer_includes" name="offer_includes" rows="5" class="large-text">' . esc_textarea($includes) . '</textarea></td></tr>';
+    echo '<tr><th colspan="2"><h3 style="margin: 20px 0 10px;">Галерея проекта</h3></th></tr>';
+    echo '<tr><th><label>Изображения галереи<br><small>(до 5 изображений)</small>:</label></th><td>';
+    
+    // Gallery uploader
+    for ($i = 1; $i <= 5; $i++) {
+        $image_id = isset($gallery["image_$i"]) ? $gallery["image_$i"] : '';
+        $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'medium') : '';
+        
+        echo '<div class="gallery-item" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+        echo '<label style="font-weight: 600;">Изображение ' . $i . ':</label><br>';
+        echo '<div class="image-preview" style="margin: 10px 0;">';
+        if ($image_url) {
+            echo '<img src="' . esc_url($image_url) . '" style="max-width: 150px; height: auto; display: block; margin-bottom: 10px;">';
+        }
+        echo '</div>';
+        echo '<input type="hidden" id="gallery_image_' . $i . '" name="gallery_image_' . $i . '" value="' . esc_attr($image_id) . '">';
+        echo '<button type="button" class="button gallery-upload" data-target="gallery_image_' . $i . '">Выбрать изображение</button> ';
+        echo '<button type="button" class="button gallery-remove" data-target="gallery_image_' . $i . '" style="margin-left: 10px;">Удалить</button>';
+        echo '</div>';
+    }
+    
+    echo '</td></tr>';
     echo '</table>';
+    
+    // Add media uploader script
+    echo '<script>
+    jQuery(document).ready(function($) {
+        
+        $(".gallery-upload").click(function(e) {
+            e.preventDefault();
+            var target = $(this).data("target");
+            var button = $(this);
+            var preview = button.siblings(".image-preview");
+            
+            // Create new media uploader instance for each click
+            var mediaUploader = wp.media({
+                title: "Выберите изображение для галереи",
+                button: { text: "Выбрать изображение" },
+                multiple: false,
+                library: { type: "image" }
+            });
+            
+            // Remove any existing event listeners
+            mediaUploader.off("select");
+            
+            mediaUploader.on("select", function() {
+                var attachment = mediaUploader.state().get("selection").first().toJSON();
+                $("#" + target).val(attachment.id);
+                
+                // Use different size fallbacks
+                var imageUrl = attachment.url; // fallback to full size
+                if (attachment.sizes) {
+                    if (attachment.sizes.medium) {
+                        imageUrl = attachment.sizes.medium.url;
+                    } else if (attachment.sizes.thumbnail) {
+                        imageUrl = attachment.sizes.thumbnail.url;
+                    } else if (attachment.sizes.large) {
+                        imageUrl = attachment.sizes.large.url;
+                    }
+                }
+                
+                preview.html("<img src=\"" + imageUrl + "\" style=\"max-width: 150px; height: auto; display: block; margin-bottom: 10px;\">");
+            });
+            
+            mediaUploader.open();
+        });
+        
+        $(".gallery-remove").click(function(e) {
+            e.preventDefault();
+            var target = $(this).data("target");
+            var preview = $(this).siblings(".image-preview");
+            $("#" + target).val("");
+            preview.html("");
+        });
+    });
+    </script>';
 }
 
 function save_offer_meta($post_id) {
@@ -115,17 +204,48 @@ function save_offer_meta($post_id) {
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
     if (!current_user_can('edit_post', $post_id)) return;
     
-    if (isset($_POST['offer_area'])) {
-        update_post_meta($post_id, '_offer_area', sanitize_text_field($_POST['offer_area']));
+    $fields = [
+        'offer_area' => '_offer_area',
+        'offer_price' => '_offer_price',
+        'offer_features' => '_offer_features',
+        'offer_project_description' => '_offer_project_description',
+        'offer_frame_spec' => '_offer_frame_spec',
+        'offer_windows_spec' => '_offer_windows_spec',
+        'offer_electrical_spec' => '_offer_electrical_spec',
+        'offer_interior_spec' => '_offer_interior_spec',
+        'offer_includes' => '_offer_includes'
+    ];
+    
+    foreach ($fields as $field_name => $meta_key) {
+        if (isset($_POST[$field_name])) {
+            if (in_array($field_name, ['offer_area', 'offer_price'])) {
+                update_post_meta($post_id, $meta_key, sanitize_text_field($_POST[$field_name]));
+            } else {
+                update_post_meta($post_id, $meta_key, sanitize_textarea_field($_POST[$field_name]));
+            }
+        }
     }
-    if (isset($_POST['offer_price'])) {
-        update_post_meta($post_id, '_offer_price', sanitize_text_field($_POST['offer_price']));
+    
+    // Save gallery images
+    $gallery = [];
+    for ($i = 1; $i <= 5; $i++) {
+        if (isset($_POST["gallery_image_$i"]) && !empty($_POST["gallery_image_$i"])) {
+            $gallery["image_$i"] = intval($_POST["gallery_image_$i"]);
+        }
     }
-    if (isset($_POST['offer_features'])) {
-        update_post_meta($post_id, '_offer_features', sanitize_textarea_field($_POST['offer_features']));
-    }
+    update_post_meta($post_id, '_offer_gallery', $gallery);
 }
 add_action('save_post', 'save_offer_meta');
+
+// Enqueue media uploader for admin
+function enqueue_admin_media_uploader() {
+    global $typenow;
+    if (in_array($typenow, ['offer', 'project'])) {
+        wp_enqueue_media();
+        wp_enqueue_script('jquery');
+    }
+}
+add_action('admin_enqueue_scripts', 'enqueue_admin_media_uploader');
 
 function add_project_meta_boxes() {
     add_meta_box(
@@ -150,12 +270,107 @@ function project_details_callback($post) {
     $area = get_post_meta($post->ID, '_project_area', true);
     $price = get_post_meta($post->ID, '_project_price', true);
     $features = get_post_meta($post->ID, '_project_features', true);
+    $modules_count = get_post_meta($post->ID, '_project_modules_count', true);
+    $dimensions = get_post_meta($post->ID, '_project_dimensions', true);
+    $project_series = get_post_meta($post->ID, '_project_series', true);
+    $frame_spec = get_post_meta($post->ID, '_project_frame_spec', true);
+    $windows_spec = get_post_meta($post->ID, '_project_windows_spec', true);
+    $electrical_spec = get_post_meta($post->ID, '_project_electrical_spec', true);
+    $interior_spec = get_post_meta($post->ID, '_project_interior_spec', true);
+    $exterior_spec = get_post_meta($post->ID, '_project_exterior_spec', true);
+    $insulation_spec = get_post_meta($post->ID, '_project_insulation_spec', true);
+    $includes = get_post_meta($post->ID, '_project_includes', true);
+    $gallery = get_post_meta($post->ID, '_project_gallery', true);
     
     echo '<table class="form-table">';
+    echo '<tr><th><label for="project_series">Серия проекта:</label></th><td><input type="text" id="project_series" name="project_series" value="' . esc_attr($project_series) . '" class="regular-text" placeholder="Скандинавия"></td></tr>';
     echo '<tr><th><label for="project_area">Площадь (м²):</label></th><td><input type="number" id="project_area" name="project_area" value="' . esc_attr($area) . '" class="regular-text"></td></tr>';
     echo '<tr><th><label for="project_price">Цена (₽):</label></th><td><input type="number" id="project_price" name="project_price" value="' . esc_attr($price) . '" class="regular-text"></td></tr>';
+    echo '<tr><th><label for="project_modules_count">Количество модулей:</label></th><td><input type="number" id="project_modules_count" name="project_modules_count" value="' . esc_attr($modules_count) . '" class="regular-text"></td></tr>';
+    echo '<tr><th><label for="project_dimensions">Размеры (LxWxH mm):</label></th><td><input type="text" id="project_dimensions" name="project_dimensions" value="' . esc_attr($dimensions) . '" class="regular-text" placeholder="4000x4000x2700"></td></tr>';
     echo '<tr><th><label for="project_features">Особенности:</label></th><td><textarea id="project_features" name="project_features" rows="3" class="large-text">' . esc_textarea($features) . '</textarea></td></tr>';
+    echo '<tr><th colspan="2"><h3 style="margin: 20px 0 10px;">Технические характеристики</h3></th></tr>';
+    echo '<tr><th><label for="project_frame_spec">Силовой каркас:</label></th><td><textarea id="project_frame_spec" name="project_frame_spec" rows="2" class="large-text">' . esc_textarea($frame_spec) . '</textarea></td></tr>';
+    echo '<tr><th><label for="project_windows_spec">Окна и двери:</label></th><td><textarea id="project_windows_spec" name="project_windows_spec" rows="2" class="large-text">' . esc_textarea($windows_spec) . '</textarea></td></tr>';
+    echo '<tr><th><label for="project_electrical_spec">Электропроводка:</label></th><td><textarea id="project_electrical_spec" name="project_electrical_spec" rows="2" class="large-text">' . esc_textarea($electrical_spec) . '</textarea></td></tr>';
+    echo '<tr><th><label for="project_interior_spec">Внутренняя отделка:</label></th><td><textarea id="project_interior_spec" name="project_interior_spec" rows="2" class="large-text">' . esc_textarea($interior_spec) . '</textarea></td></tr>';
+    echo '<tr><th><label for="project_exterior_spec">Внешняя отделка:</label></th><td><textarea id="project_exterior_spec" name="project_exterior_spec" rows="2" class="large-text">' . esc_textarea($exterior_spec) . '</textarea></td></tr>';
+    echo '<tr><th><label for="project_insulation_spec">Утепление:</label></th><td><textarea id="project_insulation_spec" name="project_insulation_spec" rows="2" class="large-text">' . esc_textarea($insulation_spec) . '</textarea></td></tr>';
+    echo '<tr><th><label for="project_includes">Что включено<br><small>(каждый пункт с новой строки)</small>:</label></th><td><textarea id="project_includes" name="project_includes" rows="5" class="large-text">' . esc_textarea($includes) . '</textarea></td></tr>';
+    
+    // Gallery for projects
+    echo '<tr><th colspan="2"><h3 style="margin: 20px 0 10px;">Галерея проекта</h3></th></tr>';
+    echo '<tr><th><label>Изображения галереи<br><small>(до 5 изображений)</small>:</label></th><td>';
+    
+    for ($i = 1; $i <= 5; $i++) {
+        $image_id = isset($gallery["image_$i"]) ? $gallery["image_$i"] : '';
+        $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'medium') : '';
+        
+        echo '<div class="gallery-item" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+        echo '<label style="font-weight: 600;">Изображение ' . $i . ':</label><br>';
+        echo '<div class="image-preview" style="margin: 10px 0;">';
+        if ($image_url) {
+            echo '<img src="' . esc_url($image_url) . '" style="max-width: 150px; height: auto; display: block; margin-bottom: 10px;">';
+        }
+        echo '</div>';
+        echo '<input type="hidden" id="project_gallery_image_' . $i . '" name="project_gallery_image_' . $i . '" value="' . esc_attr($image_id) . '">';
+        echo '<button type="button" class="button project-gallery-upload" data-target="project_gallery_image_' . $i . '">Выбрать изображение</button> ';
+        echo '<button type="button" class="button project-gallery-remove" data-target="project_gallery_image_' . $i . '" style="margin-left: 10px;">Удалить</button>';
+        echo '</div>';
+    }
+    
+    echo '</td></tr>';
     echo '</table>';
+    
+    // Add media uploader script for projects
+    echo '<script>
+    jQuery(document).ready(function($) {
+        
+        $(".project-gallery-upload").click(function(e) {
+            e.preventDefault();
+            var target = $(this).data("target");
+            var button = $(this);
+            var preview = button.siblings(".image-preview");
+            
+            var mediaUploader = wp.media({
+                title: "Выберите изображение для галереи проекта",
+                button: { text: "Выбрать изображение" },
+                multiple: false,
+                library: { type: "image" }
+            });
+            
+            mediaUploader.off("select");
+            
+            mediaUploader.on("select", function() {
+                var attachment = mediaUploader.state().get("selection").first().toJSON();
+                $("#" + target).val(attachment.id);
+                
+                var imageUrl = attachment.url;
+                if (attachment.sizes) {
+                    if (attachment.sizes.medium) {
+                        imageUrl = attachment.sizes.medium.url;
+                    } else if (attachment.sizes.thumbnail) {
+                        imageUrl = attachment.sizes.thumbnail.url;
+                    } else if (attachment.sizes.large) {
+                        imageUrl = attachment.sizes.large.url;
+                    }
+                }
+                
+                preview.html("<img src=\"" + imageUrl + "\" style=\"max-width: 150px; height: auto; display: block; margin-bottom: 10px;\">");
+            });
+            
+            mediaUploader.open();
+        });
+        
+        $(".project-gallery-remove").click(function(e) {
+            e.preventDefault();
+            var target = $(this).data("target");
+            var preview = $(this).siblings(".image-preview");
+            $("#" + target).val("");
+            preview.html("");
+        });
+    });
+    </script>';
 }
 
 function project_type_callback($post) {
@@ -175,15 +390,40 @@ function save_project_meta($post_id) {
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
         if (!current_user_can('edit_post', $post_id)) return;
         
-        if (isset($_POST['project_area'])) {
-            update_post_meta($post_id, '_project_area', sanitize_text_field($_POST['project_area']));
+        $fields = [
+            'project_area' => '_project_area',
+            'project_price' => '_project_price',
+            'project_features' => '_project_features',
+            'project_modules_count' => '_project_modules_count',
+            'project_dimensions' => '_project_dimensions',
+            'project_series' => '_project_series',
+            'project_frame_spec' => '_project_frame_spec',
+            'project_windows_spec' => '_project_windows_spec',
+            'project_electrical_spec' => '_project_electrical_spec',
+            'project_interior_spec' => '_project_interior_spec',
+            'project_exterior_spec' => '_project_exterior_spec',
+            'project_insulation_spec' => '_project_insulation_spec',
+            'project_includes' => '_project_includes'
+        ];
+        
+        foreach ($fields as $field_name => $meta_key) {
+            if (isset($_POST[$field_name])) {
+                if (in_array($field_name, ['project_area', 'project_price', 'project_modules_count'])) {
+                    update_post_meta($post_id, $meta_key, sanitize_text_field($_POST[$field_name]));
+                } else {
+                    update_post_meta($post_id, $meta_key, sanitize_textarea_field($_POST[$field_name]));
+                }
+            }
         }
-        if (isset($_POST['project_price'])) {
-            update_post_meta($post_id, '_project_price', sanitize_text_field($_POST['project_price']));
+        
+        // Save project gallery
+        $gallery = [];
+        for ($i = 1; $i <= 5; $i++) {
+            if (isset($_POST["project_gallery_image_$i"]) && !empty($_POST["project_gallery_image_$i"])) {
+                $gallery["image_$i"] = intval($_POST["project_gallery_image_$i"]);
+            }
         }
-        if (isset($_POST['project_features'])) {
-            update_post_meta($post_id, '_project_features', sanitize_textarea_field($_POST['project_features']));
-        }
+        update_post_meta($post_id, '_project_gallery', $gallery);
     }
     
     if (isset($_POST['project_type_nonce']) && wp_verify_nonce($_POST['project_type_nonce'], 'project_type_nonce')) {

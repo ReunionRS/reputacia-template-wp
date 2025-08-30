@@ -1,4 +1,3 @@
-// Mobile nav
 const burger = document.querySelector('#burger');
 const nav = document.querySelector('#nav');
 if (burger){
@@ -18,7 +17,6 @@ function setupModal(triggerSel, modalSel){
 setupModal('[data-open=callback]', '#modal-callback');
 setupModal('[data-open=calculator]', '#modal-calculator');
 
-// Calculator
 const calcForm = document.querySelector('#calc-form');
 if (calcForm){
   calcForm.addEventListener('input',()=>{
@@ -30,7 +28,6 @@ if (calcForm){
   });
 }
 
-// Smooth scrolling for anchor links
 document.querySelectorAll('a[href^="#"]').forEach(a=>{
   a.addEventListener('click', (e)=>{
     const id = a.getAttribute('href').slice(1);
@@ -43,7 +40,6 @@ document.querySelectorAll('a[href^="#"]').forEach(a=>{
   })
 });
 
-// Project filter
 const projectButtons = document.querySelectorAll('.projects-nav button');
 const projectCards = document.querySelectorAll('.project-card');
 
@@ -52,11 +48,9 @@ if (projectButtons.length > 0) {
     button.addEventListener('click', () => {
       const filter = button.dataset.filter;
       
-      // Update active button
       projectButtons.forEach(btn => btn.classList.remove('active'));
       button.classList.add('active');
       
-      // Filter projects
       projectCards.forEach(card => {
         const category = card.dataset.category;
         if (filter === 'all' || category === filter) {
@@ -69,7 +63,120 @@ if (projectButtons.length > 0) {
   });
 }
 
-// AJAX Form submissions
+class GallerySlider {
+  constructor(slider) {
+    this.slider = slider;
+    this.track = slider.querySelector('.gallery-track');
+    this.slides = slider.querySelectorAll('.gallery-slide');
+    this.prevBtn = slider.querySelector('.gallery-prev');
+    this.nextBtn = slider.querySelector('.gallery-next');
+    this.dots = slider.querySelectorAll('.gallery-dot');
+    
+    this.currentSlide = 0;
+    this.totalSlides = this.slides.length;
+    
+    this.init();
+  }
+  
+  init() {
+    if (this.totalSlides <= 1) return;
+    
+    if (this.prevBtn) {
+      this.prevBtn.addEventListener('click', () => this.prevSlide());
+    }
+    
+    if (this.nextBtn) {
+      this.nextBtn.addEventListener('click', () => this.nextSlide());
+    }
+    
+    this.dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => this.goToSlide(index));
+    });
+    
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+    
+    this.track.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      isDragging = true;
+    });
+    
+    this.track.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      currentX = e.touches[0].clientX;
+    });
+    
+    this.track.addEventListener('touchend', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      
+      const diff = startX - currentX;
+      const threshold = 50;
+      
+      if (diff > threshold) {
+        this.nextSlide();
+      } else if (diff < -threshold) {
+        this.prevSlide();
+      }
+    });
+    
+    document.addEventListener('keydown', (e) => {
+      if (!this.slider.matches(':hover')) return;
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        this.prevSlide();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        this.nextSlide();
+      }
+    });
+    
+    this.autoPlay();
+  }
+  
+  goToSlide(index) {
+    this.currentSlide = index;
+    this.updateSlider();
+  }
+  
+  nextSlide() {
+    this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
+    this.updateSlider();
+  }
+  
+  prevSlide() {
+    this.currentSlide = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+    this.updateSlider();
+  }
+  
+  updateSlider() {
+    const translateX = -this.currentSlide * 100;
+    this.track.style.transform = `translateX(${translateX}%)`;
+    
+    this.dots.forEach((dot, index) => {
+      dot.classList.toggle('active', index === this.currentSlide);
+    });
+  }
+  
+  autoPlay() {
+    if (this.totalSlides <= 1) return;
+    
+    setInterval(() => {
+      if (!this.slider.matches(':hover')) {
+        this.nextSlide();
+      }
+    }, 5000); 
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const gallerySliders = document.querySelectorAll('.gallery-slider');
+  gallerySliders.forEach(slider => new GallerySlider(slider));
+});
+
 document.addEventListener('DOMContentLoaded', function() {
   const forms = document.querySelectorAll('#contact-form, #callback-form');
   
@@ -80,8 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const formData = new FormData(this);
       const submitButton = this.querySelector('.submit');
       const originalText = submitButton.textContent;
-      
-      // Show loading state
       submitButton.textContent = 'Отправляем...';
       submitButton.disabled = true;
       
@@ -94,7 +199,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.success) {
           alert('Заявка отправлена! Мы свяжемся с вами.');
           this.reset();
-          // Close modal if it's in modal
           const modal = this.closest('.modal');
           if (modal) {
             modal.classList.remove('open');
@@ -115,11 +219,9 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// Initialize calculator on load
 document.addEventListener('DOMContentLoaded', function() {
   const calcForm = document.querySelector('#calc-form');
   if (calcForm) {
-    // Trigger calculation on load
     calcForm.dispatchEvent(new Event('input'));
   }
 });
