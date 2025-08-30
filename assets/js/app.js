@@ -225,3 +225,63 @@ document.addEventListener('DOMContentLoaded', function() {
     calcForm.dispatchEvent(new Event('input'));
   }
 });
+
+// Animation functions
+function animateOnScroll() {
+  const elements = document.querySelectorAll('.card, .project-card, .quick-info-card, .spec-card, .section h2, .section .sub');
+  
+  elements.forEach(element => {
+    const elementTop = element.getBoundingClientRect().top;
+    const elementVisible = 150;
+    
+    if (elementTop < window.innerHeight - elementVisible) {
+      element.classList.add('animate-fade-in-up');
+    }
+  });
+}
+
+// Initialize animations on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Animate hero elements
+  setTimeout(() => {
+    document.querySelector('.hero-content h1')?.classList.add('animate-fade-in-up');
+  }, 100);
+  
+  setTimeout(() => {
+    document.querySelector('.hero-content p')?.classList.add('animate-fade-in-up');
+  }, 300);
+  
+  setTimeout(() => {
+    document.querySelector('.hero-actions')?.classList.add('animate-fade-in-up');
+  }, 500);
+  
+  // Initialize scroll animations
+  animateOnScroll();
+  window.addEventListener('scroll', animateOnScroll);
+});
+
+// Update modal opening with animation
+function setupModal(triggerSel, modalSel){
+  const t = document.querySelectorAll(triggerSel);
+  const m = document.querySelector(modalSel);
+  if(!m) return;
+  const close = m.querySelector('[data-close]');
+  const dialog = m.querySelector('.modal-dialog');
+  
+  t.forEach(el=> el.addEventListener('click', ()=> {
+    m.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }));
+  
+  [m, close].forEach(el=> el && el.addEventListener('click', (e)=>{
+    if(e.target===m || e.currentTarget===close){ 
+      m.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  }));
+  
+  // Prevent dialog click from closing modal
+  dialog.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}

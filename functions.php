@@ -435,55 +435,89 @@ function save_project_meta($post_id) {
 add_action('save_post', 'save_project_meta');
 
 // AJAX обработчики для форм
+// AJAX обработчики для форм
 function handle_contact_form() {
-    if (!wp_verify_nonce($_POST['nonce'], 'reputacia_nonce')) {
+    // Проверяем nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'reputacia_nonce')) {
         wp_send_json_error('Ошибка безопасности');
+        wp_die();
     }
-    
+
+    // Получаем и очищаем данные
     $name = sanitize_text_field($_POST['name']);
     $phone = sanitize_text_field($_POST['phone']);
     $message = isset($_POST['message']) ? sanitize_textarea_field($_POST['message']) : '';
     $form_type = isset($_POST['form_type']) ? sanitize_text_field($_POST['form_type']) : 'contact';
     
+    // Дополнительные поля для калькулятора
+    $area = isset($_POST['area']) ? sanitize_text_field($_POST['area']) : '';
+    $finish = isset($_POST['finish']) ? sanitize_text_field($_POST['finish']) : '';
+    $windows = isset($_POST['windows']) ? sanitize_text_field($_POST['windows']) : '';
+    $calculated_price = isset($_POST['calculated_price']) ? sanitize_text_field($_POST['calculated_price']) : '';
+
+    // Подготовка данных для email
     $to = get_option('admin_email');
     $subject = ($form_type === 'callback') ? 'Заказ обратного звонка' : 'Новая заявка с сайта';
     $subject .= ' - ' . get_bloginfo('name');
-    
+
     $body = "Новая заявка:\n\n";
     $body .= "Имя: $name\n";
     $body .= "Телефон: $phone\n";
+    
     if ($message) {
         $body .= "Сообщение: $message\n";
     }
+    
+    if ($area || $finish || $windows || $calculated_price) {
+        $body .= "\nДанные из калькулятора:\n";
+        if ($area) $body .= "Площадь: $area м²\n";
+        if ($finish) $body .= "Отделка: $finish\n";
+        if ($windows) $body .= "Окна: $windows шт\n";
+        if ($calculated_price) $body .= "Рассчитанная стоимость: $calculated_price ₽\n";
+    }
+    
     $body .= "Тип формы: $form_type\n";
     $body .= "Дата: " . current_time('d.m.Y H:i') . "\n";
-    
+    $body .= "IP: " . $_SERVER['REMOTE_ADDR'] . "\n";
+
     $headers = ['Content-Type: text/plain; charset=UTF-8'];
+
+    // Отправляем email
+    $email_sent = wp_mail($to, $subject, $body, $headers);
+
+    // Создаем запись в кастомном типе записи
+    $post_data = [
+        'post_title' => ($form_type === 'callback') ? "Обратный звонок - $name" : "Заявка от $name",
+        'post_content' => $message,
+        'post_status' => 'private',
+        'post_type' => 'contact_form',
+        'meta_input' => [
+            'contact_name' => $name,
+            'contact_phone' => $phone,
+            'contact_message' => $message,
+            'form_type' => $form_type,
+            'contact_area' => $area,
+            'contact_finish' => $finish,
+            'contact_windows' => $windows,
+            'contact_calculated_price' => $calculated_price,
+            'contact_date' => current_time('Y-m-d H:i:s'),
+            'contact_ip' => $_SERVER['REMOTE_ADDR']
+        ]
+    ];
     
-    if (wp_mail($to, $subject, $body, $headers)) {
-        $post_data = [
-            'post_title' => ($form_type === 'callback') ? "Обратный звонок - $name" : "Заявка от $name",
-            'post_content' => $message,
-            'post_status' => 'private',
-            'post_type' => 'contact_form',
-            'meta_input' => [
-                'contact_name' => $name,
-                'contact_phone' => $phone,
-                'form_type' => $form_type,
-                'contact_date' => current_time('Y-m-d H:i:s')
-            ]
-        ];
+    $post_id = wp_insert_post($post_data);
+
+if ($email_sent || $post_id) {
+    $success_message = ($form_type === 'callback') ? 
+        'Заявка принята! Мы перезвоним вам в ближайшее время.' : 
+        'Заявка отправлена! Мы свяжемся с вами в течение 15 минут.';
         
-        wp_insert_post($post_data);
-        
-        $success_message = ($form_type === 'callback') ? 
-            'Заявка принята! Мы перезвоним вам в ближайшее время.' : 
-            'Заявка отправлена! Мы свяжемся с вами.';
-            
-        wp_send_json_success($success_message);
-    } else {
-        wp_send_json_error('Ошибка отправки. Попробуйте еще раз.');
-    }
+    wp_send_json_success($success_message);
+} else {
+    wp_send_json_error('Ошибка отправки. Пожалуйста, попробуйте еще раз или позвоните нам напрямую.');
+}
+    
+    wp_die();
 }
 add_action('wp_ajax_contact_form', 'handle_contact_form');
 add_action('wp_ajax_nopriv_contact_form', 'handle_contact_form');
@@ -527,14 +561,38 @@ add_action('add_meta_boxes', 'add_contact_form_meta_boxes');
 function contact_form_meta_box_callback($post) {
     $name = get_post_meta($post->ID, 'contact_name', true);
     $phone = get_post_meta($post->ID, 'contact_phone', true);
+    $message = get_post_meta($post->ID, 'contact_message', true);
     $form_type = get_post_meta($post->ID, 'form_type', true);
     $date = get_post_meta($post->ID, 'contact_date', true);
+    $ip = get_post_meta($post->ID, 'contact_ip', true);
+    
+    // Данные из калькулятора
+    $area = get_post_meta($post->ID, 'contact_area', true);
+    $finish = get_post_meta($post->ID, 'contact_finish', true);
+    $windows = get_post_meta($post->ID, 'contact_windows', true);
+    $calculated_price = get_post_meta($post->ID, 'contact_calculated_price', true);
     
     echo '<table class="form-table">';
     echo '<tr><th><label>Имя:</label></th><td>' . esc_html($name) . '</td></tr>';
     echo '<tr><th><label>Телефон:</label></th><td><a href="tel:' . esc_attr($phone) . '">' . esc_html($phone) . '</a></td></tr>';
-    echo '<tr><th><label>Тип формы:</label></th><td>' . esc_html($form_type === 'callback' ? 'Обратный звонок' : 'Обычная заявка') . '</td></tr>';
+    
+    if ($message) {
+        echo '<tr><th><label>Сообщение:</label></th><td>' . esc_html($message) . '</td></tr>';
+    }
+    
+    echo '<tr><th><label>Тип формы:</label></th><td>' . esc_html($form_type === 'callback' ? 'Обратный звонок' : ($form_type === 'calculator' ? 'Калькулятор' : 'Обычная заявка')) . '</td></tr>';
+    
+    // Показываем данные калькулятора если есть
+    if ($area || $finish || $windows || $calculated_price) {
+        echo '<tr><th colspan="2"><h3>Данные из калькулятора</h3></th></tr>';
+        if ($area) echo '<tr><th><label>Площадь:</label></th><td>' . esc_html($area) . ' м²</td></tr>';
+        if ($finish) echo '<tr><th><label>Отделка:</label></th><td>' . esc_html($finish) . '</td></tr>';
+        if ($windows) echo '<tr><th><label>Окна:</label></th><td>' . esc_html($windows) . ' шт</td></tr>';
+        if ($calculated_price) echo '<tr><th><label>Рассчитанная стоимость:</label></th><td>' . esc_html($calculated_price) . '</td></tr>';
+    }
+    
     echo '<tr><th><label>Дата:</label></th><td>' . esc_html($date ?: get_the_date('d.m.Y H:i', $post->ID)) . '</td></tr>';
+    if ($ip) echo '<tr><th><label>IP адрес:</label></th><td>' . esc_html($ip) . '</td></tr>';
     echo '</table>';
 }
 
@@ -592,7 +650,16 @@ function fill_contact_form_columns($column, $post_id) {
             break;
         case 'form_type':
             $type = get_post_meta($post_id, 'form_type', true);
-            echo esc_html($type === 'callback' ? 'Обратный звонок' : 'Заявка');
+            $type_labels = [
+                'callback' => 'Обратный звонок',
+                'calculator' => 'Калькулятор',
+                'contact' => 'Заявка'
+            ];
+            echo esc_html($type_labels[$type] ?? $type);
+            break;
+        case 'contact_date':
+            $date = get_post_meta($post_id, 'contact_date', true);
+            echo esc_html($date ? date('d.m.Y H:i', strtotime($date)) : get_the_date('d.m.Y H:i', $post_id));
             break;
     }
 }

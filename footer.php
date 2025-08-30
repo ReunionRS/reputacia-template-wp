@@ -33,19 +33,28 @@
             <h3>Калькулятор стоимости</h3>
             <button class="close" data-close>&times;</button>
         </div>
-        <form id="calc-form">
+        <form id="calc-form" method="post">
             <label for="area">Площадь, м²</label>
-            <input id="area" name="area" type="number" min="10" step="1" value="36">
+            <input id="area" name="area" type="number" min="10" step="1" value="36" required>
+            
             <label for="finish">Отделка</label>
-            <select id="finish" name="finish">
-                <option value="0">Базовая</option>
-                <option value="1">Комфорт</option>
-                <option value="2">Премиум</option>
+            <select id="finish" name="finish" required>
+                <option value="Базовая">Базовая</option>
+                <option value="Комфорт">Комфорт</option>
+                <option value="Премиум">Премиум</option>
             </select>
+            
             <label for="windows">Панорамные окна (шт)</label>
-            <input id="windows" name="windows" type="number" min="0" step="1" value="2">
+            <input id="windows" name="windows" type="number" min="0" step="1" value="2" required>
+            
             <p><strong>Итого: <span id="calc-result">—</span></strong></p>
-            <button class="cta submit" type="button" data-open="callback">Оставить заявку</button>
+            
+            <input type="hidden" name="calculated_price" id="calculated-price">
+            <input type="hidden" name="action" value="contact_form">
+            <input type="hidden" name="form_type" value="calculator">
+            <input type="hidden" name="nonce" value="<?php echo wp_create_nonce('reputacia_nonce'); ?>">
+            
+            <button type="submit" class="cta submit">Оставить заявку</button>
         </form>
     </div>
 </div>

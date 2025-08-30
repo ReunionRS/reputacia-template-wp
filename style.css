@@ -1819,3 +1819,232 @@ img {
         text-align: center;
     }
 }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animation classes */
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.6s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s ease-out forwards;
+}
+
+.animate-delay-1 {
+  animation-delay: 0.1s;
+}
+
+.animate-delay-2 {
+  animation-delay: 0.2s;
+}
+
+.animate-delay-3 {
+  animation-delay: 0.3s;
+}
+
+/* Apply animations to elements */
+.card,
+.project-card,
+.quick-info-card,
+.spec-card {
+  opacity: 0;
+}
+
+.modal-dialog {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 0.3s ease-out;
+}
+
+.modal.open .modal-dialog {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Hero animations */
+.hero-content h1,
+.hero-content p,
+.hero-actions {
+  opacity: 0;
+}
+
+/* Section animations */
+.section h2,
+.section .sub {
+  opacity: 0;
+}
+
+/* ===== MODAL ANIMATIONS ===== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 60;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal.open {
+  display: flex;
+  opacity: 1;
+}
+
+.modal-dialog {
+  background: var(--bg-soft);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  padding: 24px;
+  transform: translateY(-30px) scale(0.95);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.modal.open .modal-dialog {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* ===== SUCCESS/ERROR MESSAGE ANIMATIONS ===== */
+.form-message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+  font-weight: 500;
+  transform: translateY(-10px);
+  opacity: 0;
+  animation: slideInMessage 0.4s ease forwards;
+}
+
+@keyframes slideInMessage {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.form-message.success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: rgb(34, 197, 94);
+}
+
+.form-message.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: rgb(239, 68, 68);
+}
+
+/* ===== FLOATING SUCCESS NOTIFICATION ===== */
+.floating-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(34, 197, 94, 0.95);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+  z-index: 1000;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 0.4s ease;
+  max-width: 300px;
+}
+
+.floating-notification.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.floating-notification.error {
+  background: rgba(239, 68, 68, 0.95);
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+}
+
+.floating-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.floating-notification-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* ===== LOADING ANIMATION ===== */
+.submit-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.submit-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--accent);
+  animation: spin 1s ease-in-out infinite;
+}
+
