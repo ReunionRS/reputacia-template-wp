@@ -14,7 +14,6 @@ get_header(); ?>
     $includes = get_post_meta(get_the_ID(), '_offer_includes', true);
 ?>
 
-<!-- Hero Section -->
 <section class="offer-hero">
     <?php if (has_post_thumbnail()) : ?>
         <?php the_post_thumbnail('full', array('class' => 'offer-hero-bg', 'alt' => get_the_title())); ?>
@@ -57,7 +56,6 @@ get_header(); ?>
     </div>
 </section>
 
-<!-- Quick Info Cards -->
 <?php if ($features) : ?>
 <section class="offer-quick-info">
     <div class="container">
@@ -80,7 +78,6 @@ get_header(); ?>
 </section>
 <?php endif; ?>
 
-<!-- Main Content -->
 <section class="offer-content">
     <div class="container">
         <div class="offer-content-grid">
@@ -96,7 +93,6 @@ get_header(); ?>
                 </div>
                 <?php endif; ?>
                 
-                <!-- Technical Specifications -->
                 <?php if ($frame_spec || $windows_spec || $electrical_spec || $interior_spec) : ?>
                 <div class="offer-specs">
                     <h3>Технические характеристики</h3>
@@ -161,11 +157,10 @@ get_header(); ?>
                 <?php endif; ?>
             </div>
             
-            <!-- Sidebar -->
             <div class="offer-sidebar">
                 <div class="offer-card">
                     <div class="offer-card-header">
-                        <h3>Готовый дом "под ключ"</h3>
+                        <h3><?php the_title(); ?></h3>
                         <?php if ($price) : ?>
                             <div class="offer-price">
                                 <span class="price-from">от</span>
@@ -192,11 +187,11 @@ get_header(); ?>
                         </ul>
                         <?php else : ?>
                         <ul class="offer-includes">
-                            <li>✓ Проект и чертежи</li>
-                            <li>✓ Производство модулей</li>
-                            <li>✓ Доставка на участок</li>
-                            <li>✓ Установка за 1 день</li>
-                            <li>✓ Гарантия 5 лет</li>
+                            <li>Проект и чертежи</li>
+                            <li>Производство модулей</li>
+                            <li>Доставка на участок</li>
+                            <li>Установка от 1 дня</li>
+                            <li>Гарантия</li>
                         </ul>
                         <?php endif; ?>
                         
@@ -207,7 +202,6 @@ get_header(); ?>
                     </div>
                 </div>
                 
-                <!-- Contact Info -->
                 <div class="contact-card">
                     <h4>Есть вопросы?</h4>
                     <p>Наш специалист ответит на все вопросы и поможет с выбором проекта</p>
@@ -216,14 +210,13 @@ get_header(); ?>
                             <?php echo get_theme_mod('phone_number', '+7 (891) 200-74-33'); ?>
                         </a>
                     </div>
-                    <div class="contact-hours">с 9:00 до 21:00, без выходных</div>
+                    <div class="contact-hours">Ежедневно, без выходных</div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Gallery Section -->
 <?php 
 $gallery = get_post_meta(get_the_ID(), '_offer_gallery', true);
 if ($gallery && !empty(array_filter($gallery))) : 
@@ -231,7 +224,7 @@ if ($gallery && !empty(array_filter($gallery))) :
 ?>
 <section class="offer-gallery">
     <div class="container">
-        <h2>Галерея проекта</h2>
+        <h2>Галерея предложения</h2>
         <div class="gallery-slider">
             <div class="gallery-track">
                 <?php foreach ($gallery_images as $key => $image_id) : 
@@ -271,11 +264,10 @@ if ($gallery && !empty(array_filter($gallery))) :
 </section>
 <?php endif; ?>
 
-<!-- CTA Section -->
 <section class="offer-cta">
     <div class="container">
         <div class="cta-content">
-            <h2>Получите готовый дом уже завтра!</h2>
+            <h2>Получите готовый объект уже завтра!</h2>
             <p>Заполните форму ниже и получите персональное предложение с расчетом стоимости</p>
             <div class="cta-actions">
                 <button class="cta large" data-open="callback">Получить предложение</button>

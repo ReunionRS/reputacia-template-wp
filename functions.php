@@ -5,9 +5,7 @@ if (!defined('ABSPATH')) {
 
 function reputacia_theme_setup() {
     add_theme_support('title-tag');
-    
     add_theme_support('post-thumbnails');
-    
     add_theme_support('html5', [
         'search-form',
         'comment-form',
@@ -15,7 +13,6 @@ function reputacia_theme_setup() {
         'gallery',
         'caption'
     ]);
-    
     add_theme_support('custom-logo', [
         'height' => 36,
         'width' => 36,
@@ -80,8 +77,467 @@ function reputacia_register_post_types() {
         'menu_icon' => 'dashicons-building',
         'rewrite' => ['slug' => 'projects']
     ]);
+
+    register_post_type('about_us', [
+        'labels' => [
+            'name' => 'О компании',
+            'singular_name' => 'О компании',
+            'add_new' => 'Добавить блок',
+            'add_new_item' => 'Добавить новый блок',
+            'edit_item' => 'Редактировать блок',
+            'new_item' => 'Новый блок',
+            'view_item' => 'Посмотреть блок',
+            'search_items' => 'Искать блоки',
+            'not_found' => 'Блоки не найдены',
+            'not_found_in_trash' => 'В корзине блоков не найдено'
+        ],
+        'public' => false,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'supports' => ['title', 'editor', 'thumbnail'],
+        'menu_icon' => 'dashicons-info-outline',
+    ]);
+
+    register_post_type('technology', [
+        'labels' => [
+            'name' => 'Технология строительства',
+            'singular_name' => 'Технология',
+            'add_new' => 'Добавить технологию',
+            'add_new_item' => 'Добавить новую технологию',
+            'edit_item' => 'Редактировать технологию',
+            'new_item' => 'Новая технологию',
+            'view_item' => 'Посмотреть технологию',
+            'search_items' => 'Искать технологии',
+            'not_found' => 'Технологии не найдены',
+            'not_found_in_trash' => 'В корзине технологий не найдено'
+        ],
+        'public' => false,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'supports' => ['title', 'editor', 'thumbnail'],
+        'menu_icon' => 'dashicons-hammer',
+    ]);
 }
 add_action('init', 'reputacia_register_post_types');
+
+function add_about_us_meta_boxes() {
+    add_meta_box(
+        'about_us_image',
+        'Изображение для блока "О компании"',
+        'about_us_image_callback',
+        'about_us',
+        'normal',
+        'high'
+    );
+}
+add_action('add_meta_boxes', 'add_about_us_meta_boxes');
+
+function reputacia_register_review_post_type() {
+    register_post_type('review', [
+        'labels' => [
+            'name' => 'Отзывы',
+            'singular_name' => 'Отзыв',
+            'add_new' => 'Добавить отзыв',
+            'add_new_item' => 'Добавить новый отзыв',
+            'edit_item' => 'Редактировать отзыв',
+            'new_item' => 'Новый отзыв',
+            'view_item' => 'Посмотреть отзыв',
+            'search_items' => 'Искать отзывы',
+            'not_found' => 'Отзывы не найдены',
+            'not_found_in_trash' => 'В корзине отзывов не найдено'
+        ],
+        'public' => false,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'supports' => ['title', 'editor', 'thumbnail'],
+        'menu_icon' => 'dashicons-star-filled',
+        'capabilities' => [
+            'edit_post' => 'manage_options',
+            'read_post' => 'manage_options', 
+            'delete_post' => 'manage_options',
+            'edit_posts' => 'manage_options',
+            'edit_others_posts' => 'manage_options',
+            'delete_posts' => 'manage_options',
+            'publish_posts' => 'manage_options',
+            'read_private_posts' => 'manage_options',
+            'create_posts' => 'manage_options',
+        ],
+    ]);
+}
+
+remove_action('init', 'reputacia_register_review_post_type');
+add_action('init', 'reputacia_register_review_post_type');
+
+function add_review_meta_boxes() {
+    add_meta_box(
+        'review_details',
+        'Детали отзыва',
+        'review_details_callback',
+        'review',
+        'normal',
+        'high'
+    );
+}
+
+function review_details_callback($post) {
+    wp_nonce_field('review_meta_nonce', 'review_meta_nonce');
+    
+    $review_project = get_post_meta($post->ID, '_review_project', true);
+    $review_location = get_post_meta($post->ID, '_review_location', true);
+    
+    echo '<table class="form-table">';
+    echo '<tr><th><label for="review_project">Проект:</label></th><td><input type="text" id="review_project" name="review_project" value="' . esc_attr($review_project) . '" class="regular-text" placeholder="Модульный дом «Модерн» 40м²"></td></tr>';
+    echo '<tr><th><label for="review_location">Местоположение:</label></th><td><input type="text" id="review_location" name="review_location" value="' . esc_attr($review_location) . '" class="regular-text" placeholder="г. Ижевск"></td></tr>';
+    echo '</table>';
+}
+
+function save_review_meta($post_id) {
+    if (!isset($_POST['review_meta_nonce']) || !wp_verify_nonce($_POST['review_meta_nonce'], 'review_meta_nonce')) {
+        return;
+    }
+    
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (!current_user_can('manage_options')) return;
+    
+    if (isset($_POST['review_project'])) {
+        update_post_meta($post_id, '_review_project', sanitize_text_field($_POST['review_project']));
+    }
+    
+    if (isset($_POST['review_location'])) {
+        update_post_meta($post_id, '_review_location', sanitize_text_field($_POST['review_location']));
+    }
+    
+    delete_post_meta($post_id, '_review_rating');
+}
+
+remove_action('add_meta_boxes', 'add_review_meta_boxes');
+remove_action('save_post_review', 'save_review_meta');
+add_action('add_meta_boxes', 'add_review_meta_boxes');
+add_action('save_post_review', 'save_review_meta');
+
+function get_reviews($limit = -1) {
+    $reviews_query = new WP_Query(array(
+        'post_type' => 'review',
+        'posts_per_page' => $limit,
+        'post_status' => 'publish',
+        'orderby' => 'date',
+        'order' => 'DESC'
+    ));
+    
+    return $reviews_query;
+}
+
+function reviews_shortcode($atts) {
+    $atts = shortcode_atts([
+        'limit' => 6,
+        'columns' => 3
+    ], $atts);
+    
+    $reviews_query = get_reviews($atts['limit']);
+    
+    if (!$reviews_query->have_posts()) {
+        return '<p>Отзывы пока не добавлены.</p>';
+    }
+    
+    $output = '<div class="reviews-shortcode-grid" style="display: grid; grid-template-columns: repeat(' . $atts['columns'] . ', 1fr); gap: 20px;">';
+    
+    while ($reviews_query->have_posts()) : $reviews_query->the_post();
+        $review_project = get_post_meta(get_the_ID(), '_review_project', true);
+        $review_location = get_post_meta(get_the_ID(), '_review_location', true);
+        
+        $output .= '<div class="review-shortcode-item" style="background: var(--bg-soft); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);">';
+        
+        if (has_post_thumbnail()) {
+            $output .= '<div style="margin-bottom: 15px;">' . get_the_post_thumbnail('medium') . '</div>';
+        }
+        
+        $output .= '<h4 style="margin: 0 0 10px; color: var(--text);">' . get_the_title() . '</h4>';
+        
+        if ($review_project) {
+            $output .= '<div style="font-weight: bold; color: var(--accent); margin-bottom: 5px;">' . esc_html($review_project) . '</div>';
+        }
+        
+        if ($review_location) {
+            $output .= '<div style="font-size: 14px; color: var(--muted); margin-bottom: 15px;">' . esc_html($review_location) . '</div>';
+        }
+        
+        $output .= '<div style="color: var(--muted); line-height: 1.6;">' . get_the_content() . '</div>';
+        $output .= '</div>';
+        
+    endwhile;
+    wp_reset_postdata();
+    
+    $output .= '</div>';
+    
+    return $output;
+}
+
+remove_shortcode('reviews');
+add_shortcode('reviews', 'reviews_shortcode');
+
+function add_review_columns($columns) {
+    $new_columns = [];
+    $new_columns['cb'] = $columns['cb'];
+    $new_columns['thumbnail'] = 'Фото';
+    $new_columns['title'] = $columns['title'];
+    $new_columns['review_project'] = 'Проект';
+    $new_columns['review_location'] = 'Место';
+    $new_columns['date'] = 'Дата';
+    return $new_columns;
+}
+
+function fill_review_columns($column, $post_id) {
+    switch ($column) {
+        case 'thumbnail':
+            if (has_post_thumbnail($post_id)) {
+                echo get_the_post_thumbnail($post_id, array(50, 50));
+            } else {
+                echo '—';
+            }
+            break;
+        case 'review_project':
+            echo esc_html(get_post_meta($post_id, '_review_project', true) ?: '—');
+            break;
+        case 'review_location':
+            echo esc_html(get_post_meta($post_id, '_review_location', true) ?: '—');
+            break;
+    }
+}
+
+remove_filter('manage_review_posts_columns', 'add_review_columns');
+remove_action('manage_review_posts_custom_column', 'fill_review_columns');
+add_filter('manage_review_posts_columns', 'add_review_columns');
+add_action('manage_review_posts_custom_column', 'fill_review_columns', 10, 2);
+
+function review_admin_styles() {
+    global $typenow;
+    if ($typenow === 'review') {
+        echo '<style>
+            .column-thumbnail { width: 60px; }
+            .column-review_location { width: 120px; }
+            .column-review_project { width: 200px; }
+        </style>';
+    }
+}
+
+remove_action('admin_head', 'review_admin_styles');
+add_action('admin_head', 'review_admin_styles');
+
+function about_us_image_callback($post) {
+    wp_nonce_field('about_us_image_nonce', 'about_us_image_nonce');
+    
+    $image_id = get_post_meta($post->ID, '_about_us_image', true);
+    $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'medium') : '';
+    
+    echo '<div class="image-upload">';
+    echo '<div class="image-preview" style="margin: 10px 0;">';
+    if ($image_url) {
+        echo '<img src="' . esc_url($image_url) . '" style="max-width: 300px; height: auto; display: block; margin-bottom: 10px;">';
+    }
+    echo '</div>';
+    echo '<input type="hidden" id="about_us_image" name="about_us_image" value="' . esc_attr($image_id) . '">';
+    echo '<button type="button" class="button about-us-upload">Выбрать изображение</button> ';
+    echo '<button type="button" class="button about-us-remove" style="margin-left: 10px;">Удалить</button>';
+    echo '</div>';
+}
+
+function save_about_us_meta($post_id) {
+    if (!isset($_POST['about_us_image_nonce']) || !wp_verify_nonce($_POST['about_us_image_nonce'], 'about_us_image_nonce')) {
+        return;
+    }
+    
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (!current_user_can('edit_post', $post_id)) return;
+    
+    if (isset($_POST['about_us_image'])) {
+        update_post_meta($post_id, '_about_us_image', sanitize_text_field($_POST['about_us_image']));
+    } else {
+        delete_post_meta($post_id, '_about_us_image');
+    }
+}
+add_action('save_post_about_us', 'save_about_us_meta');
+
+function add_project_delivery_meta_boxes() {
+    add_meta_box(
+        'project_delivery_info',
+        'Доставка и установка',
+        'project_delivery_info_callback',
+        'project',
+        'normal',
+        'high'
+    );
+}
+add_action('add_meta_boxes', 'add_project_delivery_meta_boxes');
+
+function project_delivery_info_callback($post) {
+    wp_nonce_field('project_delivery_nonce', 'project_delivery_nonce');
+    
+    $delivery_info = get_post_meta($post->ID, '_project_delivery_info', true);
+    $delivery_items = $delivery_info ? explode("\n", $delivery_info) : [];
+    
+    echo '<div class="delivery-info-editor">';
+    echo '<p><strong>Укажите пункты доставки и установки (каждый пункт с новой строки):</strong></p>';
+    echo '<textarea id="project_delivery_info" name="project_delivery_info" rows="6" class="large-text" placeholder="✓ Доставка по всей России&#10;✓ Установка за 1 день&#10;✓ Готовый дом &quot;под ключ&quot;&#10;✓ Гарантия 5 лет">';
+    
+    if (!empty($delivery_items)) {
+        foreach ($delivery_items as $item) {
+            echo esc_textarea(trim($item)) . "\n";
+        }
+    } else {
+        echo "✓ Доставка по всей России\n✓ Установка за 1 день\n✓ Готовый дом \"под ключ\"\n✓ Гарантия 5 лет";
+    }
+    
+    echo '</textarea>';
+    echo '<p class="description">Каждый пункт должен начинаться с символа ✓ (галочка)</p>';
+    echo '</div>';
+}
+
+function save_project_delivery_meta($post_id) {
+    if (!isset($_POST['project_delivery_nonce']) || !wp_verify_nonce($_POST['project_delivery_nonce'], 'project_delivery_nonce')) {
+        return;
+    }
+    
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (!current_user_can('edit_post', $post_id)) return;
+    
+    if (isset($_POST['project_delivery_info'])) {
+        $delivery_info = sanitize_textarea_field($_POST['project_delivery_info']);
+        update_post_meta($post_id, '_project_delivery_info', $delivery_info);
+    }
+}
+add_action('save_post_project', 'save_project_delivery_meta');
+
+function add_technology_meta_boxes() {
+    add_meta_box(
+        'technology_image',
+        'Изображение для блока "Технологии строительства"',
+        'technology_image_callback',
+        'technology',
+        'normal',
+        'high'
+    );
+}
+add_action('add_meta_boxes', 'add_technology_meta_boxes');
+
+function technology_image_callback($post) {
+    wp_nonce_field('technology_image_nonce', 'technology_image_nonce');
+    
+    $image_id = get_post_meta($post->ID, '_technology_image', true);
+    $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'medium') : '';
+    
+    echo '<div class="image-upload">';
+    echo '<div class="image-preview" style="margin: 10px 0;">';
+    if ($image_url) {
+        echo '<img src="' . esc_url($image_url) . '" style="max-width: 300px; height: auto; display: block; margin-bottom: 10px;">';
+    }
+    echo '</div>';
+    echo '<input type="hidden" id="technology_image" name="technology_image" value="' . esc_attr($image_id) . '">';
+    echo '<button type="button" class="button technology-upload">Выбрать изображение</button> ';
+    echo '<button type="button" class="button technology-remove" style="margin-left: 10px;">Удалить</button>';
+    echo '</div>';
+}
+
+function save_technology_meta($post_id) {
+    if (!isset($_POST['technology_image_nonce']) || !wp_verify_nonce($_POST['technology_image_nonce'], 'technology_image_nonce')) {
+        return;
+    }
+    
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (!current_user_can('edit_post', $post_id)) return;
+    
+    if (isset($_POST['technology_image'])) {
+        update_post_meta($post_id, '_technology_image', sanitize_text_field($_POST['technology_image']));
+    } else {
+        delete_post_meta($post_id, '_technology_image');
+    }
+}
+add_action('save_post_technology', 'save_technology_meta');
+
+function admin_media_uploader_scripts() {
+    global $typenow;
+    
+    if (in_array($typenow, ['about_us', 'technology'])) {
+        wp_enqueue_media();
+        
+        wp_add_inline_script('jquery', '
+            jQuery(document).ready(function($) {
+                $(".about-us-upload").click(function(e) {
+                    e.preventDefault();
+                    var button = $(this);
+                    var preview = button.siblings(".image-preview");
+                    var input = button.siblings("input[type=\'hidden\']");
+                    
+                    var mediaUploader = wp.media({
+                        title: "Выберите изображение для блока О компании",
+                        button: { text: "Выбрать изображение" },
+                        multiple: false,
+                        library: { type: "image" }
+                    });
+                    
+                    mediaUploader.on("select", function() {
+                        var attachment = mediaUploader.state().get("selection").first().toJSON();
+                        input.val(attachment.id);
+                        
+                        var imageUrl = attachment.url;
+                        if (attachment.sizes && attachment.sizes.medium) {
+                            imageUrl = attachment.sizes.medium.url;
+                        }
+                        
+                        preview.html("<img src=\"" + imageUrl + "\" style=\"max-width: 300px; height: auto; display: block; margin-bottom: 10px;\">");
+                    });
+                    
+                    mediaUploader.open();
+                });
+                
+                $(".about-us-remove").click(function(e) {
+                    e.preventDefault();
+                    var preview = $(this).siblings(".image-preview");
+                    var input = $(this).siblings("input[type=\'hidden\']");
+                    input.val("");
+                    preview.html("");
+                });
+                
+                // Для блока "Технологии строительства"
+                $(".technology-upload").click(function(e) {
+                    e.preventDefault();
+                    var button = $(this);
+                    var preview = button.siblings(".image-preview");
+                    var input = button.siblings("input[type=\'hidden\']");
+                    
+                    var mediaUploader = wp.media({
+                        title: "Выберите изображение для блока Технологии",
+                        button: { text: "Выбрать изображение" },
+                        multiple: false,
+                        library: { type: "image" }
+                    });
+                    
+                    mediaUploader.on("select", function() {
+                        var attachment = mediaUploader.state().get("selection").first().toJSON();
+                        input.val(attachment.id);
+                        
+                        var imageUrl = attachment.url;
+                        if (attachment.sizes && attachment.sizes.medium) {
+                            imageUrl = attachment.sizes.medium.url;
+                        }
+                        
+                        preview.html("<img src=\"" + imageUrl + "\" style=\"max-width: 300px; height: auto; display: block; margin-bottom: 10px;\">");
+                    });
+                    
+                    mediaUploader.open();
+                });
+                
+                $(".technology-remove").click(function(e) {
+                    e.preventDefault();
+                    var preview = $(this).siblings(".image-preview");
+                    var input = $(this).siblings("input[type=\'hidden\']");
+                    input.val("");
+                    preview.html("");
+                });
+            });
+        ');
+    }
+}
+add_action('admin_enqueue_scripts', 'admin_media_uploader_scripts');
 
 function add_offer_meta_boxes() {
     add_meta_box(
@@ -90,8 +546,30 @@ function add_offer_meta_boxes() {
         'offer_details_callback',
         'offer'
     );
+    
+    add_meta_box(
+        'offer_type',
+        'Тип предложения',
+        'offer_type_callback',
+        'offer'
+    );
 }
 add_action('add_meta_boxes', 'add_offer_meta_boxes');
+
+
+function offer_type_callback($post) {
+    wp_nonce_field('offer_type_nonce', 'offer_type_nonce');
+    
+    $offer_type = get_post_meta($post->ID, '_offer_type', true);
+    
+    echo '<select name="offer_type" class="regular-text">';
+    echo '<option value="house"' . selected($offer_type, 'house', false) . '>Дома</option>';
+    echo '<option value="bath"' . selected($offer_type, 'bath', false) . '>Бани</option>';
+    echo '<option value="cabin"' . selected($offer_type, 'cabin', false) . '>Бытовки</option>';
+    echo '<option value="commercial"' . selected($offer_type, 'commercial', false) . '>Коммерческие</option>';
+    echo '</select>';
+    echo '<p class="description">Выберите категорию для фильтрации на сайте</p>';
+}
 
 function offer_details_callback($post) {
     wp_nonce_field('offer_meta_nonce', 'offer_meta_nonce');
@@ -221,6 +699,12 @@ function save_offer_meta($post_id) {
             } else {
                 update_post_meta($post_id, $meta_key, sanitize_textarea_field($_POST[$field_name]));
             }
+        }
+    }
+    
+    if (isset($_POST['offer_type_nonce']) && wp_verify_nonce($_POST['offer_type_nonce'], 'offer_type_nonce')) {
+        if (isset($_POST['offer_type'])) {
+            update_post_meta($post_id, '_offer_type', sanitize_text_field($_POST['offer_type']));
         }
     }
     
@@ -375,6 +859,7 @@ function project_type_callback($post) {
     echo '<select name="project_type" class="regular-text">';
     echo '<option value="house"' . selected($project_type, 'house', false) . '>Дома</option>';
     echo '<option value="bath"' . selected($project_type, 'bath', false) . '>Бани</option>';
+    echo '<option value="cabin"' . selected($project_type, 'cabin', false) . '>Бытовки</option>';
     echo '<option value="commercial"' . selected($project_type, 'commercial', false) . '>Коммерческие</option>';
     echo '</select>';
 }
@@ -427,7 +912,6 @@ function save_project_meta($post_id) {
 }
 add_action('save_post', 'save_project_meta');
 
-// AJAX
 function handle_contact_form() {
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'reputacia_nonce')) {
         wp_send_json_error('Ошибка безопасности');
@@ -552,7 +1036,6 @@ function contact_form_meta_box_callback($post) {
     $date = get_post_meta($post->ID, 'contact_date', true);
     $ip = get_post_meta($post->ID, 'contact_ip', true);
     
-
     $area = get_post_meta($post->ID, 'contact_area', true);
     $finish = get_post_meta($post->ID, 'contact_finish', true);
     $windows = get_post_meta($post->ID, 'contact_windows', true);
@@ -669,5 +1152,141 @@ function callback_shortcode($atts) {
     return '<button class="' . esc_attr($atts['class']) . '" data-open="callback">' . esc_html($atts['text']) . '</button>';
 }
 add_shortcode('callback', 'callback_shortcode');
+
+function reputacia_customizer_settings($wp_customize) {
+    $wp_customize->add_section('company_info', [
+        'title' => 'Информация о компании',
+        'priority' => 30
+    ]);
+
+    $wp_customize->add_setting('phone_number', [
+        'default' => '+7 (891) 200-74-33',
+        'sanitize_callback' => 'sanitize_text_field'
+    ]);
+    $wp_customize->add_control('phone_number', [
+        'label' => 'Номер телефона',
+        'section' => 'company_info',
+        'type' => 'text'
+    ]);
+
+    $wp_customize->add_setting('email_address', [
+        'default' => 'info@reputacia-dom.ru',
+        'sanitize_callback' => 'sanitize_email'
+    ]);
+    $wp_customize->add_control('email_address', [
+        'label' => 'Email адрес',
+        'section' => 'company_info',
+        'type' => 'email'
+    ]);
+
+    $wp_customize->add_setting('company_address', [
+        'default' => 'г. Ижевск, Удмуртская Республика',
+        'sanitize_callback' => 'sanitize_text_field'
+    ]);
+    $wp_customize->add_control('company_address', [
+        'label' => 'Адрес компании',
+        'section' => 'company_info',
+        'type' => 'text'
+    ]);
+
+    $wp_customize->add_setting('company_inn', [
+        'default' => '180904423155',
+        'sanitize_callback' => 'sanitize_text_field'
+    ]);
+    $wp_customize->add_control('company_inn', [
+        'label' => 'ИНН',
+        'section' => 'company_info',
+        'type' => 'text'
+    ]);
+
+    $wp_customize->add_setting('company_bank', [
+        'default' => 'Филиал «Нижегородский» АО «Альфа-Банк»',
+        'sanitize_callback' => 'sanitize_text_field'
+    ]);
+    $wp_customize->add_control('company_bank', [
+        'label' => 'Банк',
+        'section' => 'company_info',
+        'type' => 'text'
+    ]);
+
+    $wp_customize->add_setting('vk_group', [
+        'default' => 'https://vk.com/reputacia_doma',
+        'sanitize_callback' => 'esc_url_raw'
+    ]);
+    $wp_customize->add_control('vk_group', [
+        'label' => 'Группа ВКонтакте',
+        'section' => 'company_info',
+        'type' => 'url'
+    ]);
+
+    $wp_customize->add_setting('telegram_handle', [
+        'default' => '@izh_module',
+        'sanitize_callback' => 'sanitize_text_field'
+    ]);
+    $wp_customize->add_control('telegram_handle', [
+        'label' => 'Telegram',
+        'section' => 'company_info',
+        'type' => 'text'
+    ]);
+
+    $wp_customize->add_section('hero_section', [
+        'title' => 'Главная секция',
+        'priority' => 35
+    ]);
+
+    $wp_customize->add_setting('hero_title', [
+        'default' => 'Репутация<br>Модульное строительство.',
+        'sanitize_callback' => 'wp_kses_post'
+    ]);
+    $wp_customize->add_control('hero_title', [
+        'label' => 'Заголовок Hero секции',
+        'section' => 'hero_section',
+        'type' => 'textarea'
+    ]);
+
+    $wp_customize->add_setting('hero_description', [
+        'default' => 'Быстровозводимые бытовки, бани, дома в Ижевске и УР. Профессиональное строительство модульных зданий любой сложности.',
+        'sanitize_callback' => 'sanitize_textarea_field'
+    ]);
+    $wp_customize->add_control('hero_description', [
+        'label' => 'Описание Hero секции',
+        'section' => 'hero_section',
+        'type' => 'textarea'
+    ]);
+
+    $wp_customize->add_setting('logo_text', [
+        'default' => 'РЕПУТАЦИЯ',
+        'sanitize_callback' => 'sanitize_text_field'
+    ]);
+    $wp_customize->add_control('logo_text', [
+        'label' => 'Текст логотипа',
+        'section' => 'title_tagline',
+        'type' => 'text'
+    ]);
+
+    $wp_customize->add_setting('logo_subtitle', [
+        'default' => 'СТРОИТЕЛЬНАЯ КОМПАНИЯ',
+        'sanitize_callback' => 'sanitize_text_field'
+    ]);
+    $wp_customize->add_control('logo_subtitle', [
+        'label' => 'Подпись логотипа',
+        'section' => 'title_tagline',
+        'type' => 'text'
+    ]);
+}
+add_action('customize_register', 'reputacia_customizer_settings');
+
+function reputacia_widgets_init() {
+    register_sidebar([
+        'name' => 'Футер - Социальные сети',
+        'id' => 'footer-social',
+        'description' => 'Виджеты для социальных сетей в футере',
+        'before_widget' => '<div class="footer-widget">',
+        'after_widget' => '</div>',
+        'before_title' => '<h3 class="widget-title">',
+        'after_title' => '</h3>',
+    ]);
+}
+add_action('widgets_init', 'reputacia_widgets_init');
 
 ?>

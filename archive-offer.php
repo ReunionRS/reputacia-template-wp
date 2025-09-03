@@ -57,7 +57,6 @@
             </div>
             
             <?php
-            // Пагинация
             $pagination = paginate_links([
                 'total' => $wp_query->max_num_pages,
                 'current' => max(1, get_query_var('paged')),

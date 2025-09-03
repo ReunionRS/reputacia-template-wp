@@ -34,7 +34,7 @@
                 'container' => false,
                 'fallback_cb' => function() {
                     echo '<a href="#about">О нас</a>';
-                    echo '<a href="#projects">Проекты и цены</a>';
+                    echo '<a href="#offers">Проекты и цены</a>';
                     echo '<a href="#portfolio">Наши работы</a>';
                     echo '<a href="#contacts">Контакты</a>';
                 }
@@ -42,7 +42,7 @@
             ?>
             <div class="phone">
                 <?php echo get_theme_mod('phone_number', '+7 (891) 200-74-33'); ?>
-                <div class="phone-hours">с 9:00 до 21:00, без выходных</div>
+                <div class="phone-hours">Ежедневно, без выходных</div>
             </div>
             <button class="cta" data-open="callback">ЗАКАЗАТЬ ЗВОНОК</button>
         </nav>

@@ -19,7 +19,6 @@ get_header(); ?>
     $gallery = get_post_meta(get_the_ID(), '_project_gallery', true);
 ?>
 
-<!-- Hero Section -->
 <section class="project-hero">
     <?php if (has_post_thumbnail()) : ?>
         <?php the_post_thumbnail('full', array('class' => 'project-hero-bg', 'alt' => get_the_title())); ?>
@@ -69,7 +68,7 @@ get_header(); ?>
                 
                 <?php if ($price) : ?>
                     <div class="project-price-hero">
-                        <span class="price-label">Готовый дом "под ключ"</span>
+                        <span class="price-label">Готовый проект "под ключ"</span>
                         <span class="price-amount"><?php echo number_format($price, 0, '', ' '); ?> ₽</span>
                     </div>
                 <?php endif; ?>
@@ -83,13 +82,13 @@ get_header(); ?>
     </div>
 </section>
 
-<!-- Gallery Section -->
 <?php 
 if ($gallery && !empty(array_filter($gallery))) : 
     $gallery_images = array_filter($gallery);
 ?>
 <section class="project-gallery-section">
     <div class="container">
+        <h2>Галерея проекта</h2>
         <div class="gallery-slider">
             <div class="gallery-track">
                 <?php foreach ($gallery_images as $key => $image_id) : 
@@ -129,7 +128,6 @@ if ($gallery && !empty(array_filter($gallery))) :
 </section>
 <?php endif; ?>
 
-<!-- Main Content -->
 <section class="project-content">
     <div class="container">
         <div class="project-content-grid">
@@ -141,7 +139,6 @@ if ($gallery && !empty(array_filter($gallery))) :
                 </div>
                 <?php endif; ?>
                 
-                <!-- Комплектация -->
                 <div class="project-specifications">
                     <h2>Комплектация</h2>
                     
@@ -232,8 +229,7 @@ if ($gallery && !empty(array_filter($gallery))) :
                     </div>
                 </div>
             </div>
-            
-            <!-- Sidebar -->
+
             <div class="project-sidebar">
                 <div class="project-order-card">
                     <h3>Заказать проект</h3>
@@ -269,18 +265,31 @@ if ($gallery && !empty(array_filter($gallery))) :
                         <button class="button full-width" data-open="calculator">Рассчитать стоимость</button>
                     </div>
                     
-                    <div class="delivery-info">
-                        <h4>Доставка и установка</h4>
-                        <ul class="delivery-list">
-                            <li>✓ Доставка по всей России</li>
-                            <li>✓ Установка за 1 день</li>
-                            <li>✓ Готовый дом "под ключ"</li>
-                            <li>✓ Гарантия 5 лет</li>
-                        </ul>
-                    </div>
+                        <?php
+                        $delivery_info = get_post_meta(get_the_ID(), '_project_delivery_info', true);
+                        $delivery_items = $delivery_info ? explode("\n", $delivery_info) : [
+                            '✓ Доставка по всей России',
+                            '✓ Установка за 1 день',
+                            '✓ Готовый дом "под ключ"',
+                            '✓ Гарантия 5 лет'
+                        ];
+                        ?>
+
+                        <?php if (!empty($delivery_items)) : ?>
+                        <div class="delivery-info">
+                            <h4>Доставка и установка</h4>
+                            <ul class="delivery-list">
+                                <?php foreach ($delivery_items as $item) : 
+                                    $item = trim($item);
+                                    if (!empty($item)) : ?>
+                                        <li><?php echo esc_html($item); ?></li>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                        <?php endif; ?>
                 </div>
                 
-                <!-- Contact Info -->
                 <div class="project-contact-card">
                     <h4>Нужна консультация?</h4>
                     <p>Ответим на все вопросы и поможем с выбором проекта</p>
@@ -289,14 +298,13 @@ if ($gallery && !empty(array_filter($gallery))) :
                             <?php echo get_theme_mod('phone_number', '+7 (891) 200-74-33'); ?>
                         </a>
                     </div>
-                    <div class="contact-hours">с 9:00 до 21:00, без выходных</div>
+                    <div class="contact-hours">Ежедневно,, без выходных</div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- CTA Section -->
 <section class="project-cta">
     <div class="container">
         <div class="cta-content">
